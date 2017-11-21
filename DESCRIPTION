@@ -1,0 +1,28 @@
+Package: SelexGLM
+Type: Package
+Title: Functions for performing feature-based analyis of SELEX-seq data
+        using generalized linear models
+Version: 0.99
+Date: 2016-01-05
+Author: Gabriella D. Martini, Harmen J. Bussemaker
+Maintainer: Harmen J. Bussemaker <hjb2004@columbia.edu>
+Description: This packages provides fucntionalility for feature-based analysis 
+    of SELEX data using generalized linear models.
+License: GPL-3
+RoxygenNote: 6.0.1
+Imports: Biostrings, SELEX, stringi, ggplot2, reshape2
+Depends: methods, RColorBrewer
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+Collate: 'generic-functions-definitions.R' 'Intercept-validity.R'
+        'Intercept-class.R' 'plottingTools.R' 'N-validity.R'
+        'N-class.R' 'Shape-validity.R' 'Shape-class.R'
+        'topModelMatch.R' 'addDesignMatrix.R'
+        'buildRawRegressionFormula.R' 'dnaSequenceTools.R'
+        'featureSet-validity.R' 'featureSet-class.R'
+        'getKmerCountAffinities.R' 'getProbeCounts.R'
+        'updatedRegressionFormula.R' 'iterateSelexGLM.R'
+        'model-validity.R' 'model-class.R' 'package-SelexGLM.R'
+        'scoreKmers.R'
+NeedsCompilation: no
+Packaged: 2017-11-21 17:10:34 UTC; HJB

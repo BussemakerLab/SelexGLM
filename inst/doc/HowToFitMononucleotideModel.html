@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Gabriella D. Martini and Harmen J. Bussemaker" />
+
+<meta name="date" content="2017-11-21" />
+
+<title>Using SelexGLM to Fit a Feature-Based Protein-DNA Recognition model to SELEX-seq Data</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Using SelexGLM to Fit a Feature-Based Protein-DNA Recognition model to SELEX-seq Data</h1>
+<h4 class="author"><em>Gabriella D. Martini and Harmen J. Bussemaker</em></h4>
+<h4 class="date"><em>2017-11-21</em></h4>
+
+
+
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(SELEX)</code></pre></div>
+<pre><code>## Loading required package: rJava</code></pre>
+<pre><code>## Warning: package 'rJava' was built under R version 3.2.5</code></pre>
+<pre><code>## Loading required package: Biostrings</code></pre>
+<pre><code>## Warning: package 'Biostrings' was built under R version 3.2.2</code></pre>
+<pre><code>## Loading required package: BiocGenerics</code></pre>
+<pre><code>## Loading required package: parallel</code></pre>
+<pre><code>## 
+## Attaching package: 'BiocGenerics'</code></pre>
+<pre><code>## The following objects are masked from 'package:parallel':
+## 
+##     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+##     clusterExport, clusterMap, parApply, parCapply, parLapply,
+##     parLapplyLB, parRapply, parSapply, parSapplyLB</code></pre>
+<pre><code>## The following objects are masked from 'package:rJava':
+## 
+##     anyDuplicated, duplicated, sort, unique</code></pre>
+<pre><code>## The following object is masked from 'package:stats':
+## 
+##     xtabs</code></pre>
+<pre><code>## The following objects are masked from 'package:base':
+## 
+##     Filter, Find, Map, Position, Reduce, anyDuplicated, append,
+##     as.data.frame, as.vector, cbind, colnames, do.call,
+##     duplicated, eval, evalq, get, intersect, is.unsorted, lapply,
+##     mapply, match, mget, order, paste, pmax, pmax.int, pmin,
+##     pmin.int, rank, rbind, rep.int, rownames, sapply, setdiff,
+##     sort, table, tapply, union, unique, unlist, unsplit</code></pre>
+<pre><code>## Loading required package: S4Vectors</code></pre>
+<pre><code>## Warning: package 'S4Vectors' was built under R version 3.2.2</code></pre>
+<pre><code>## Loading required package: stats4</code></pre>
+<pre><code>## Creating a generic function for 'nchar' from package 'base' in package 'S4Vectors'</code></pre>
+<pre><code>## Loading required package: IRanges</code></pre>
+<pre><code>## Warning: package 'IRanges' was built under R version 3.2.2</code></pre>
+<pre><code>## Warning in .recacheSubclasses(def@className, def, doSubclasses, env):
+## undefined subclass &quot;externalRefMethod&quot; of class &quot;expressionORfunction&quot;;
+## definition not updated</code></pre>
+<pre><code>## Warning in .recacheSubclasses(def@className, def, doSubclasses, env):
+## undefined subclass &quot;externalRefMethod&quot; of class &quot;functionORNULL&quot;;
+## definition not updated</code></pre>
+<pre><code>## Loading required package: XVector</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(stringi)</code></pre></div>
+<pre><code>## Warning: package 'stringi' was built under R version 3.2.5</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(Biostrings)
+<span class="kw">library</span>(SelexGLM)</code></pre></div>
+<pre><code>## Loading required package: RColorBrewer</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(devtools)
+<span class="kw">library</span>(reshape2)</code></pre></div>
+<pre><code>## Warning: package 'reshape2' was built under R version 3.2.5</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(ggplot2)</code></pre></div>
+<pre><code>## Warning: package 'ggplot2' was built under R version 3.2.5</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(Rmisc)</code></pre></div>
+<pre><code>## Loading required package: lattice</code></pre>
+<pre><code>## Warning: package 'lattice' was built under R version 3.2.5</code></pre>
+<pre><code>## Loading required package: plyr</code></pre>
+<pre><code>## Warning: package 'plyr' was built under R version 3.2.5</code></pre>
+<pre><code>## 
+## Attaching package: 'plyr'</code></pre>
+<pre><code>## The following object is masked from 'package:XVector':
+## 
+##     compact</code></pre>
+<pre><code>## The following object is masked from 'package:IRanges':
+## 
+##     desc</code></pre>
+<pre><code>## The following object is masked from 'package:S4Vectors':
+## 
+##     rename</code></pre>
+<p>We start with some initialization related to the <code>SELEX</code> package:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">options</span>(<span class="dt">java.parameters =</span> <span class="st">&quot;-Xmx4000M&quot;</span>)
+workDir =<span class="st"> </span><span class="kw">tempdir</span>()
+<span class="kw">selex.config</span>(<span class="dt">workingDir=</span>workDir, <span class="dt">maxThreadNumber=</span><span class="dv">4</span>)</code></pre></div>
+<p>Next, we will define the SELEX samples that we want to analyze. We will use the example data from the <code>SELEX</code> package:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">selex.loadAnnotation</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;config.xml&quot;</span>, <span class="dt">package=</span><span class="st">&quot;SELEX&quot;</span>))
+<span class="kw">selex.sampleSummary</span>()</code></pre></div>
+<pre><code>##        seqName   sampleName rounds leftBarcode rightBarcode
+## 3 R0.libraries R0.barcodeCG      0         TGG      CCACGTC
+## 2 R0.libraries R0.barcodeGC      0         TGG      CCAGCTG
+## 1 R2.libraries    ExdHox.R2      2         TGG      CCAGCTG
+##                       leftFlank                   rightFlank
+## 3 GTTCAGAGTTCTACAGTCCGACGATCTGG CCACGTCTCGTATGCCGTCTTCTGCTTG
+## 2 GTTCAGAGTTCTACAGTCCGACGATCTGG CCAGCTGTCGTATGCCGTCTTCTGCTTG
+## 1 GTTCAGAGTTCTACAGTCCGACGATCTGG CCAGCTGTCGTATGCCGTCTTCTGCTTG
+##                                                                                    seqFile
+## 3 /Library/Frameworks/R.framework/Versions/3.2/Resources/library/SELEX/extdata/R0.fastq.gz
+## 2 /Library/Frameworks/R.framework/Versions/3.2/Resources/library/SELEX/extdata/R0.fastq.gz
+## 1 /Library/Frameworks/R.framework/Versions/3.2/Resources/library/SELEX/extdata/R2.fastq.gz</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r0.train =<span class="st"> </span><span class="kw">selex.sample</span>(<span class="dt">seqName =</span> <span class="st">'R0.libraries'</span>, <span class="dt">sampleName=</span><span class="st">'R0.barcodeGC'</span>, <span class="dt">round =</span> <span class="dv">0</span>)
+r0.test =<span class="st"> </span><span class="kw">selex.sample</span>(<span class="dt">seqName =</span> <span class="st">'R0.libraries'</span>, <span class="dt">sampleName=</span><span class="st">'R0.barcodeCG'</span>, <span class="dt">round =</span> <span class="dv">0</span>)
+dataSample =<span class="st"> </span><span class="kw">selex.sample</span>(<span class="dt">seqName =</span> <span class="st">'R2.libraries'</span>, <span class="dt">sampleName =</span> <span class="st">'ExdHox.R2'</span>, <span class="dt">round =</span> <span class="dv">2</span>)</code></pre></div>
+<p>Markov model is built, information gain is used to identify k-mer length of binding site, kmer tables are built, and probes are counted in a way that corrects for the zero-deflated nature of data corrected.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># MARKOV MODEL BUILT</span>
+kmax =<span class="st"> </span><span class="kw">selex.kmax</span>(<span class="dt">sample =</span> r0.test)</code></pre></div>
+<pre><code>## Counting [R0.libraries.R0.barcodeCG.0][ K = 1 ]
+## Counting [R0.libraries.R0.barcodeCG.0][ K = 2 ]
+## Counting [R0.libraries.R0.barcodeCG.0][ K = 3 ]
+## Counting [R0.libraries.R0.barcodeCG.0][ K = 4 ]
+## Counting [R0.libraries.R0.barcodeCG.0][ K = 5 ]
+## Counting [R0.libraries.R0.barcodeCG.0][ K = 6 ]
+## [ sample id : R0.libraries.R0.barcodeCG.0,  filter:  variableRegionIncludeRegex:null,variableRegionExcludeRegex:null,variableRegionGroupRegex:null ]
+## [ R0.libraries.R0.barcodeCG.0.kmax = 5 ]</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Train Markov model on Hm 16bp library Round 0 data</span>
+mm =<span class="st"> </span><span class="kw">selex.mm</span>(<span class="dt">sample =</span> r0.train, <span class="dt">order =</span> <span class="ot">NA</span>, <span class="dt">crossValidationSample =</span>r0.test, <span class="dt">Kmax =</span> kmax, <span class="dt">mmMethod =</span> <span class="st">&quot;TRANSITION&quot;</span>)</code></pre></div>
+<pre><code>## Overwriting Kmax = 5
+## Counting [R0.libraries.R0.barcodeGC.0][ K = 1 ]
+## Counting [R0.libraries.R0.barcodeGC.0][ K = 2 ]
+## Counting [R0.libraries.R0.barcodeGC.0][ K = 3 ]
+## Counting [R0.libraries.R0.barcodeGC.0][ K = 4 ]
+## Counting [R0.libraries.R0.barcodeGC.0][ K = 5 ]
+## [ markovLength = 3 ]
+## [ maxR = 0.989094 ]
+## [ Model = MarkovModelInfo [markovLength=3, markovLengthTotalCount=483784, markovR2=0.9890939798281818, markovCountsPath=/var/folders/6r/52dcl0sj1yg0z69w89t6fjyr0000gp/T/Rtmp5eCqOw//R0.libraries.R0.barcodeGC.0.3.dat_A7FE7F4E2E78A43F892C7F3227FFA520, markovObjPath=/var/folders/6r/52dcl0sj1yg0z69w89t6fjyr0000gp/T/Rtmp5eCqOw//R0.libraries.R0.barcodeGC.0.3.dat_A7FE7F4E2E78A43F892C7F3227FFA520.prob.obj, sample=config.ExperimentReference@133c3b45, markovModelMethod=TRANSITION, crossValidationSample=config.ExperimentReference@f5bfdbd, filter=variableRegionIncludeRegex:null,variableRegionExcludeRegex:null,variableRegionGroupRegex:null,kmerIncludeRegex:null,kmerExcludeRegex:null,kmerIncludeOnly:null] ]</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mmscores =<span class="st"> </span><span class="kw">selex.mmSummary</span>(<span class="dt">sample =</span> r0.train)
+ido =<span class="st"> </span><span class="kw">which</span>(mmscores$R==<span class="kw">max</span>(mmscores$R))
+mm.order =<span class="st"> </span>mmscores$Order[ido]</code></pre></div>
+<p>More preliminaries:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># INFOGAIN USED TO CALCULATE KLEN</span>
+libLen =<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">as.character</span>(<span class="kw">selex.getAttributes</span>(dataSample)$VariableRegionLength))
+<span class="kw">selex.infogain</span>(<span class="dt">sample =</span> dataSample, <span class="dt">k =</span> <span class="kw">c</span>((mm.order<span class="dv">+1</span>):libLen), <span class="dt">markovModel =</span> mm)</code></pre></div>
+<pre><code>## Counting [InfoGain][ K = 3 ]
+## Counting [InfoGain][ K = 4 ]
+## Counting [InfoGain][ K = 5 ]
+## Counting [InfoGain][ K = 6 ]
+## Counting [InfoGain][ K = 7 ]
+## Counting [InfoGain][ K = 8 ]
+## Counting [InfoGain][ K = 9 ]
+## Counting [InfoGain][ K = 10 ]
+## Counting [InfoGain][ K = 11 ]
+## Counting [InfoGain][ K = 12 ]
+## Counting [InfoGain][ K = 13 ]
+## Counting [InfoGain][ K = 14 ]
+## Counting [InfoGain][ K = 15 ]
+## Counting [InfoGain][ K = 16 ]</code></pre>
+<pre><code>## [1] 2.420417</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">infoscores =<span class="st"> </span><span class="kw">selex.infogainSummary</span>(<span class="dt">sample =</span> dataSample)
+
+<span class="co">#information gain barplot</span>
+idx =<span class="st"> </span><span class="kw">which</span>(infoscores$InformationGain==<span class="kw">max</span>(infoscores$InformationGain))
+colstring =<span class="st"> </span><span class="kw">rep</span>(<span class="st">'BLUE'</span>, <span class="kw">nrow</span>(infoscores))
+colstring[idx] =<span class="st"> 'RED'</span>
+<span class="kw">barplot</span>(<span class="dt">height=</span>infoscores$InformationGain, <span class="dt">names.arg=</span>infoscores$K, <span class="dt">col=</span>colstring,
+        <span class="dt">xlab=</span><span class="st">&quot;Oligonucleotide Length (bp)&quot;</span>, <span class="dt">ylab=</span><span class="st">&quot;Information Gain (bits)&quot;</span>)</code></pre></div>
+<p><img src="data:image/png;base64,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wzeHVSOBeCdAARTvd5jXRwIxTIACKIZvDqtGAvFOgAIo3u8wr48EYpgABVAM3xxWjQTinQAFULzfYV4fCcQwAQqgGL45rBoJxDsBCqB4v8O8PhKIYQIUQDF8c1g1Eoh3AhRA8X6HeX0kEMMEKIBi+OawaiQQ7wQogOL9DvP6SCCGCVAAxfDNYdVIIN4JUADF+x3m9ZFADBOgAIrhm8OqkUC8E6AAivc7zOsjgRgmQAEUwzeHVSOBeCdAARTvd5jXRwIxTIACKIZvDqtGAvFOgAIo3u8wr48EYpgABVAM3xxWjQTinQAFULzfYV4fCcQwAQqgGL45rBoJxDsBCqB4v8O8PhKIYQIUQA43R7kSltOnTzvE8jAJRIfAqVOnZO/evSEtfMuWLdrTbkgzDTAzCiALqISEBOnSpYvkypVL8ufPL9dee63UqFFD+vfvL5cuXbKkFGnfvr3Url1bH/vqq68kTZo08vvvv3ulSSk7ym+9jB49OqTVVb7OZezYsXL+/PmAGc2ePVtzPHbsWJLrMmDAAJ2H7/1KcobJPPHo0aPy4YcfenL58ssvdf3gfjkp4amnnpJly5bpUx955BGpVq1aUrLxOue1116T6dOnex2L1A4F0L+k//jjD7nlllvks88+k379+slPP/0kCxculNtuu02GDBkijz76qONXAsLq4YcflqxZs0bqvsV8OXign3jiCbly5Yqua2pl9Nhjj8m0adNCcr82b94sGzdulIceeigk+ZmZDBo0SD/z0RDa6c1KpPb/zz//vKAF9Msvv0i+fPk8OO68806pXLmyPPjgg1K4cGEZOHCgJ87cuPnmm72+cubx1PwfLSBrSK2MwAGt41CE3r17y5NPPhmy/Mw6FSlSRMqWLSvjxo2T7t27m4cj8p8tIIV569atMnXqVHnppZe8hI95Bx544AFp27atTJo0yTzk9X/16tVaSO3fv99zfP78+dK4cWPJmTOnQIgtX75cp9m1a5cnzbfffit16tSR7NmzS8mSJQVC8MKFC574unXrCprs3bp1k0KFCunfs88+69UdrF69unz66aeec7Dx4osvCr681jBhwgRBfuhe4gtqNuOtacxtfGnvuusuXXfUC/n5fh391f3zzz+XPn366Oxq1aolkydPFidGDRs2lOuuu07uuece+fPPP80qeP5PnDhRKlSooFuXVatWFeQd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" /><!-- --></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">kLen =<span class="st"> </span>infoscores$K[idx]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># For the sake of previous analysis on the Hox data used in this example, I will use kLen.f = 12 as my k-mer length, even though kLen identified through the information gain analysis has kLen = 13</span>
+data.kmerTable =<span class="st"> </span><span class="kw">selex.affinities</span>(<span class="dt">sample=</span>dataSample, <span class="dt">k=</span>kLen, <span class="dt">markovModel=</span>mm)</code></pre></div>
+<pre><code>## Counting [R2.libraries.ExdHox.R2.2][ K = 9 ]
+## [ Lowest Count =  1 ]</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data.kmerTable =<span class="st"> </span>data.kmerTable[<span class="kw">order</span>(-data.kmerTable$Affinity), ]
+<span class="kw">rownames</span>(data.kmerTable) =<span class="st"> </span><span class="ot">NULL</span>
+
+data.probeCounts =<span class="st"> </span><span class="kw">getProbeCounts</span>(dataSample, <span class="dt">markovModel =</span> mm)</code></pre></div>
+<pre><code>## Counting [R2.libraries.split.1.ExdHox.R2.split.1.2][ K = 16 ]
+## [ Lowest Count =  1 ]
+## Counting [R2.libraries.split.2.ExdHox.R2.split.2.2][ K = 16 ]
+## [ Lowest Count =  1 ]</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(data.probeCounts)</code></pre></div>
+<pre><code>##     Probe           ObservedCount     Probability            Round  
+##  Length:24504       Min.   :0.0000   Min.   :3.036e-11   Min.   :2  
+##  Class :character   1st Qu.:0.0000   1st Qu.:2.537e-10   1st Qu.:2  
+##  Mode  :character   Median :0.0000   Median :3.882e-10   Median :2  
+##                     Mean   :0.0375   Mean   :4.493e-10   Mean   :2  
+##                     3rd Qu.:0.0000   3rd Qu.:5.725e-10   3rd Qu.:2  
+##                     Max.   :3.0000   Max.   :3.307e-09   Max.   :2</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(data.probeCounts[<span class="dv">1</span>:<span class="dv">10</span>,])</code></pre></div>
+<pre><code>##               Probe ObservedCount  Probability Round
+## 1  GTTGATTGATGGGTTT             3 1.198516e-09     2
+## 2  GATGATTGATTGTTAT             3 1.081091e-09     2
+## 3  GATGATTGATCGATGT             3 5.086886e-10     2
+## 4  GAGAATGATTGATTAC             3 3.691869e-10     2
+## 5  GAATGATTGATTACAT             3 5.432474e-10     2
+## 6  ATGTTTGATTGATTAT             3 1.425483e-09     2
+## 7  ATGATTGATGAGTCTA             3 4.712116e-10     2
+## 8  AATGATTGATTATTGT             3 1.051582e-09     2
+## 9  AAATGATTGATTAGCT             3 4.940620e-10     2
+## 10 AAATGATTGATTACTT             3 6.086128e-10     2</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Inputs about library are data specific </span>
+model =<span class="st"> </span><span class="kw">new</span>(<span class="st">&quot;model&quot;</span>,
+             <span class="dt">varRegLen =</span> libLen,
+             <span class="dt">leftFixedSeq =</span>  <span class="st">&quot;GTTCAGAGTTCTACAGTCCGACGATCTGG&quot;</span>, 
+             <span class="dt">rightFixedSeq =</span><span class="st">&quot;CCAGCTGTCGTATGCCGTCTTCTGCTTG&quot;</span>, 
+             <span class="dt">seedLen =</span> kLen, 
+             <span class="dt">leftFixedSeqOverlap =</span> <span class="dv">4</span>,
+             <span class="dt">initialAffinityCutoff =</span> <span class="fl">0.00</span>,
+             <span class="dt">missingValueSuppression =</span> <span class="dv">1</span>,
+             <span class="dt">minSeedValue =</span> .<span class="dv">001</span>, 
+             <span class="dt">upFootprintExtend =</span> <span class="dv">2</span>,
+             <span class="dt">includeWindowFactor =</span> <span class="ot">FALSE</span>,
+             <span class="dt">confidenceLevel =</span> .<span class="dv">95</span>, 
+             <span class="dt">verbose =</span> <span class="ot">FALSE</span>, 
+             <span class="dt">useFixedValuesOffset.N =</span> <span class="ot">FALSE</span>,
+             <span class="dt">rounds =</span> <span class="kw">list</span>(<span class="kw">c</span>(<span class="dv">2</span>)),
+             <span class="dt">rcSymmetric =</span> <span class="ot">FALSE</span>,
+             <span class="dt">minAffinity =</span> <span class="fl">0.01</span>
+          )</code></pre></div>
+<p>Inspect current state of model object:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">model@features@N</code></pre></div>
+<pre><code>## An object of class 'N'
+## 
+## Slot &quot;seedLen&quot;:  9 
+## 
+## Slot &quot;N.upFootprintExtend&quot;:  2 
+## 
+## Slot &quot;N.downFootprintExtend&quot;:  2 
+## 
+## Slot &quot;fS.upFootprintExtend&quot;:  2 
+## 
+## Slot &quot;fS.downFootprintExtend&quot;:  2 
+## 
+## Slot &quot;fpLen&quot;:  13 
+## 
+## Slot &quot;N.set&quot;:  1 2 3 4 5 6 7 8 9 10 11 12 13 
+## 
+## Slot &quot;N.equivMat&quot;:
+## 13  x  13  null equivalence matrix
+## 
+## Slot &quot;N.values&quot;:
+##     1 2 3 4 5 6 7 8 9 10 11 12 13
+## N.A 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.C 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.G 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.T 0 0 0 0 0 0 0 0 0  0  0  0  0
+## 
+## 
+## Slot &quot;N.errors&quot;:
+##     1 2 3 4 5 6 7 8 9 10 11 12 13
+## N.A 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.C 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.G 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.T 0 0 0 0 0 0 0 0 0  0  0  0  0
+## 
+## 
+## Slot &quot;N.z&quot;:
+##     1 2 3 4 5 6 7 8 9 10 11 12 13
+## N.A 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.C 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.G 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.T 0 0 0 0 0 0 0 0 0  0  0  0  0
+## 
+## 
+## Slot &quot;N.sig&quot;:
+##     1 2 3 4 5 6 7 8 9 10 11 12 13
+## N.A 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.C 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.G 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.T 0 0 0 0 0 0 0 0 0  0  0  0  0
+## 
+## 
+## Slot &quot;N.oldValues&quot;:
+## &lt;4 x 13 x 0 array of double&gt;
+## 
+## Slot &quot;N.oldErrors&quot;:
+## &lt;4 x 13 x 0 array of double&gt;
+## 
+## Slot &quot;N.oldZ&quot;:
+## &lt;4 x 13 x 0 array of double&gt;
+## 
+## Slot &quot;N.oldSig&quot;:
+## &lt;4 x 13 x 0 array of double&gt;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Model nucleotide Betas before seed PSAM is added</span>
+<span class="kw">addSeedPsam</span>(model) =<span class="st"> </span><span class="kw">seedTable2psam</span>(model, data.kmerTable)
+<span class="co"># Model nucleotide Betas after seed PSAM is added</span>
+model@features@N</code></pre></div>
+<pre><code>## An object of class 'N'
+## 
+## Slot &quot;seedLen&quot;:  9 
+## 
+## Slot &quot;N.upFootprintExtend&quot;:  2 
+## 
+## Slot &quot;N.downFootprintExtend&quot;:  2 
+## 
+## Slot &quot;fS.upFootprintExtend&quot;:  2 
+## 
+## Slot &quot;fS.downFootprintExtend&quot;:  2 
+## 
+## Slot &quot;fpLen&quot;:  13 
+## 
+## Slot &quot;N.set&quot;:  1 2 3 4 5 6 7 8 9 10 11 12 13 
+## 
+## Slot &quot;N.equivMat&quot;:
+## 13  x  13  null equivalence matrix
+## 
+## Slot &quot;N.values&quot;:
+##     1 2          3         4         5         6         7         8
+## N.A 0 0  0.0000000 -1.100719 -1.748610  0.000000 -3.042044 -1.808151
+## N.C 0 0 -1.5065161 -3.042044 -3.042044 -3.042044 -1.841388 -1.016157
+## N.G 0 0 -0.5525097 -3.042044  0.000000 -3.042044 -3.042044 -1.012792
+## N.T 0 0 -0.4682265  0.000000 -3.042044 -3.042044  0.000000  0.000000
+##             9        10        11 12 13
+## N.A -1.293313  0.000000 -3.042044  0  0
+## N.C -3.042044 -3.042044 -3.042044  0  0
+## N.G  0.000000 -3.042044 -3.042044  0  0
+## N.T -2.042044 -3.042044  0.000000  0  0
+## 
+## 
+## Slot &quot;N.errors&quot;:
+##     1 2 3 4 5 6 7 8 9 10 11 12 13
+## N.A 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.C 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.G 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.T 0 0 0 0 0 0 0 0 0  0  0  0  0
+## 
+## 
+## Slot &quot;N.z&quot;:
+##     1 2 3 4 5 6 7 8 9 10 11 12 13
+## N.A 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.C 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.G 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.T 0 0 0 0 0 0 0 0 0  0  0  0  0
+## 
+## 
+## Slot &quot;N.sig&quot;:
+##     1 2 3 4 5 6 7 8 9 10 11 12 13
+## N.A 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.C 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.G 0 0 0 0 0 0 0 0 0  0  0  0  0
+## N.T 0 0 0 0 0 0 0 0 0  0  0  0  0
+## 
+## 
+## Slot &quot;N.oldValues&quot;:
+## &lt;4 x 13 x 0 array of double&gt;
+## 
+## Slot &quot;N.oldErrors&quot;:
+## &lt;4 x 13 x 0 array of double&gt;
+## 
+## Slot &quot;N.oldZ&quot;:
+## &lt;4 x 13 x 0 array of double&gt;
+## 
+## Slot &quot;N.oldSig&quot;:
+## &lt;4 x 13 x 0 array of double&gt;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#Use this definition of data for complete analysis</span>
+data =<span class="st"> </span>data.probeCounts
+
+data =<span class="st"> </span><span class="kw">topModelMatch</span>(data, model)
+<span class="co"># Uses aligned probes to build design matrix</span>
+data =<span class="st"> </span><span class="kw">addDesignMatrix</span>(data, model)
+<span class="co"># Constructs regression expression with independent features using design matrix</span>
+regressionFormula =<span class="st"> </span><span class="kw">updatedRegressionFormula</span>(data, model)
+fit =<span class="st"> </span><span class="kw">glm</span>(regressionFormula, 
+          <span class="dt">data=</span>data, 
+          <span class="dt">family =</span> <span class="kw">poisson</span>(<span class="dt">link=</span><span class="st">&quot;log&quot;</span>))
+
+model =<span class="st"> </span><span class="kw">addNewBetas</span>(model, data, fit)
+<span class="co"># Nucleotide Features after first round of fitting</span>
+
+<span class="co"># GABRIELLA: this plotting commmand is not working, can you fix it?</span>
+<span class="co">#plot(model, Nplot.ddG = TRUE, verticalPlots = TRUE)</span>
+
+data =<span class="st"> </span>data.probeCounts
+
+data.nrow =<span class="st"> </span><span class="kw">nrow</span>(data)
+for (i in <span class="dv">2</span>:<span class="dv">3</span>) {
+  data =<span class="st"> </span><span class="kw">topModelMatch</span>(data, model)
+  data =<span class="st"> </span><span class="kw">addDesignMatrix</span>(data, model)
+  if (data.nrow ==<span class="st"> </span><span class="kw">nrow</span>(data)) {
+    <span class="kw">print</span> (<span class="st">&quot;Stability Reached&quot;</span>)
+    break
+  } else {
+    data.nrow =<span class="st"> </span><span class="kw">nrow</span>(data)
+  }
+
+          
+  regressionFormula =<span class="st"> </span><span class="kw">updatedRegressionFormula</span>(data, model)
+  fit =<span class="st"> </span><span class="kw">glm</span>(regressionFormula, 
+            <span class="dt">data=</span>data, 
+            <span class="dt">family =</span> <span class="kw">poisson</span>(<span class="dt">link=</span><span class="st">&quot;log&quot;</span>))
+
+  model =<span class="st"> </span><span class="kw">addNewBetas</span>(model,data,fit)
+  <span class="co"># Nucleotide Features after i'th round of fitting</span>
+}</code></pre></div>
+<pre><code>## Warning: glm.fit: fitted rates numerically 0 occurred</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">model@features@N@N.values</code></pre></div>
+<pre><code>##               1           2          3         4         5          6
+## N.A  0.04866333  0.05268261  0.0000000 -8.007723 -1.141010  0.0000000
+## N.C -0.29778959 -0.22239446 -0.9323824 -7.813690 -7.686484 -7.3486044
+## N.G  0.00000000  0.00000000 -0.5159343 -8.431065  0.000000  0.2000812
+## N.T -0.25621848 -0.08685875 -0.3569731  0.000000 -8.066953 -8.0201639
+##             7          8          9        10         11          12
+## N.A -8.382165 -8.0709673 -0.8518232  0.000000 -1.0000000 -0.73702293
+## N.C -7.601662 -1.3972185 -8.3405496 -1.000000 -1.0000000 -0.14461245
+## N.G -7.793026 -0.6016221  0.0000000 -7.628075 -0.8703377 -0.07539009
+## N.T  0.000000  0.0000000 -1.4875563 -7.653693  0.0000000  0.00000000
+##             13
+## N.A  0.0000000
+## N.C -0.9846406
+## N.G -0.1673405
+## N.T -0.9563936</code></pre>
+<p>Save model object for future reference:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">save</span>(model, <span class="dt">file =</span> <span class="st">&quot;HowToFitMononucleotideModel.Result.RData&quot;</span>)</code></pre></div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
